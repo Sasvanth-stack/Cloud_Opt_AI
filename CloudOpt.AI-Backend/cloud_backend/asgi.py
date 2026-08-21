@@ -1,0 +1,10 @@
+"""
+ASGI config for cloud_backend project.
+"""
+
+import os
+from django.core.asgi import get_asgi_application
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'cloud_backend.settings')
+
+application = get_asgi_application()
