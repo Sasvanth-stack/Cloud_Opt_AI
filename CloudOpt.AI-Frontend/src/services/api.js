@@ -136,65 +136,36 @@ export const api = {
   // ─────────────────────────────────────────────
   // 1. Authentication & Session APIs
   // ─────────────────────────────────────────────
+  // ── Authentication (Disabled - Direct Dashboard Mode) ─────────
   async register(userData) {
-    const response = await safeFetch(`${API_BASE_URL}/auth/register/`, {
-      method: 'POST',
-      body: JSON.stringify(userData)
-    });
-    return response;
+    return { status: 'success', user: { username: 'Admin', full_name: 'CloudOpt Operator', role: 'ADMIN' } };
   },
 
   async login(username, password) {
-    const response = await safeFetch(`${API_BASE_URL}/auth/login/`, {
-      method: 'POST',
-      body: JSON.stringify({ username, password })
-    });
-    return response;
+    return { status: 'success', user: { username: 'Admin', full_name: 'CloudOpt Operator', role: 'ADMIN' } };
   },
 
   async logout() {
-    try {
-      const response = await safeFetch(`${API_BASE_URL}/auth/logout/`, {
-        method: 'POST'
-      });
-      return response;
-    } catch (err) {
-      console.warn('Logout error (clearing local state anyway):', err);
-      return { status: 'success' };
-    }
+    return { status: 'success' };
   },
 
   async getCurrentUser() {
-    try {
-      const response = await safeFetch(`${API_BASE_URL}/auth/me/`);
-      if (response && response.status === 'success') {
-        return response.user || response.data?.user || null;
-      }
-      return null;
-    } catch {
-      return null;
-    }
+    return {
+      id: 1,
+      username: 'Admin',
+      full_name: 'CloudOpt Operator',
+      email: 'operator@cloudopt.ai',
+      role: 'ADMIN',
+      is_active: true
+    };
   },
 
   async forgotPassword(email) {
-    const response = await safeFetch(`${API_BASE_URL}/auth/forgot-password/`, {
-      method: 'POST',
-      body: JSON.stringify({ email })
-    });
-    return response;
+    return { status: 'success' };
   },
 
   async resetPassword(uid, token, new_password, confirm_password) {
-    const response = await safeFetch(`${API_BASE_URL}/auth/reset-password/`, {
-      method: 'POST',
-      body: JSON.stringify({
-        uid,
-        token,
-        new_password,
-        confirm_password
-      })
-    });
-    return response;
+    return { status: 'success' };
   },
 
   // ─────────────────────────────────────────────
