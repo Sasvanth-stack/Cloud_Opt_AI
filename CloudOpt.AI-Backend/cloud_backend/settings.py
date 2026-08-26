@@ -171,6 +171,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5178",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "https://cloud-opt-ai-rk8c.vercel.app",
 ]
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^http://localhost:\d+$",
@@ -211,6 +212,7 @@ CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:5178",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "https://cloud-opt-ai-rk8c.vercel.app",
 ]
 
 CSRF_COOKIE_HTTPONLY = False
@@ -233,5 +235,5 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@cloudopt.ai')
 
 # Frontend Application URL for Password Reset Links & Redirects
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://127.0.0.1:5177").strip()
+FRONTEND_URL = os.getenv("FRONTEND_URL", "https://cloud-opt-ai-rk8c.vercel.app").strip()
 
