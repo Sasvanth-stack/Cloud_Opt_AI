@@ -120,11 +120,16 @@ def auth_register(request):
     Registers a new user in PostgreSQL and immediately establishes an active session.
     """
     data = request.data
-    full_name = data.get('full_name', '').strip()
-    email = data.get('email', '').strip().lower()
-    username = data.get('username', '').strip()
+    full_name = (data.get('full_name') or data.get('fullName') or '').strip()
+    email = (data.get('email') or '').strip().lower()
+    username = (data.get('username') or '').strip()
     password = data.get('password', '')
-    confirm_password = data.get('confirm_password', '') or data.get('password_confirm', '')
+    confirm_password = (
+        data.get('confirm_password') or 
+        data.get('confirmPassword') or 
+        data.get('password_confirm') or 
+        ''
+    )
 
     # 1. Required fields validation
     if not full_name:
