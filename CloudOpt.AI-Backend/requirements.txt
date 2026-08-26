@@ -30,3 +30,4 @@ types-PyYAML==6.0.12.20260815
 typing_extensions==4.16.0
 tzdata==2026.3
 urllib3==2.7.0
+dj-database-url
