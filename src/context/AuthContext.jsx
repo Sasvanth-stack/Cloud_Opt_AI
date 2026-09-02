@@ -1,5 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import api from '../services/api';
+import React, { createContext, useContext, useState } from 'react';
 
 const AuthContext = createContext(null);
 
@@ -11,11 +10,19 @@ export const ROLES = {
   VIEWER_MANAGER: 'VIEWER_MANAGER'
 };
 
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+const DEFAULT_USER = {
+  id: 1,
+  username: 'Admin',
+  full_name: 'CloudOpt Operator',
+  email: 'operator@cloudopt.ai',
+  role: 'ADMIN',
+  is_active: true
+};
 
-  // Equal access model: All authenticated users have full access to all features
+export function AuthProvider({ children }) {
+  const [user] = useState(DEFAULT_USER);
+
+  // Full access model without authentication restrictions
   const permissions = {
     canApprove: true,
     canDismiss: true,
@@ -27,76 +34,18 @@ export function AuthProvider({ children }) {
     canExportReports: true,
   };
 
-  const checkAuthStatus = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const currentUser = await api.getCurrentUser();
-      if (currentUser && currentUser.username) {
-        setUser(currentUser);
-        return currentUser;
-      } else {
-        setUser(null);
-        return null;
-      }
-    } catch {
-      setUser(null);
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    checkAuthStatus();
-  }, [checkAuthStatus]);
-
-  const login = async (identifier, password) => {
-    const response = await api.login(identifier, password);
-    if (response && (response.status === 'success' || response.user)) {
-      const loggedUser = response.user || response.data?.user;
-      setUser(loggedUser);
-      return response;
-    }
-    throw new Error(response?.message || 'Login failed');
-  };
-
-  const register = async (userData) => {
-    const response = await api.register(userData);
-    if (response && (response.status === 'success' || response.user)) {
-      const newUser = response.user || response.data?.user;
-      setUser(newUser);
-      return response;
-    }
-    throw new Error(response?.message || 'Registration failed');
-  };
-
-  const logout = async () => {
-    try {
-      await api.logout();
-    } finally {
-      setUser(null);
-    }
-  };
-
-  const forgotPassword = async (email) => {
-    return await api.forgotPassword(email);
-  };
-
-  const resetPassword = async (uid, token, newPassword, confirmPassword) => {
-    return await api.resetPassword(uid, token, newPassword, confirmPassword);
-  };
-
   const value = {
     user,
-    isAuthenticated: Boolean(user),
-    isLoading,
+    role: 'ADMIN',
+    isAuthenticated: true,
+    isLoading: false,
     permissions,
-    login,
-    register,
-    logout,
-    forgotPassword,
-    resetPassword,
-    checkAuthStatus
+    login: async () => ({ status: 'success', user: DEFAULT_USER }),
+    register: async () => ({ status: 'success', user: DEFAULT_USER }),
+    logout: async () => {},
+    forgotPassword: async () => ({ status: 'success' }),
+    resetPassword: async () => ({ status: 'success' }),
+    checkAuthStatus: async () => DEFAULT_USER
   };
 
   return (
@@ -113,4 +62,3 @@ export function useAuth() {
   }
   return context;
 }
-

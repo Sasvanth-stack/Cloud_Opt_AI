@@ -106,15 +106,14 @@ else:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
-            "NAME": os.getenv("DB_NAME", "cloud_optimizer_db"),
+            "NAME": os.getenv("DB_NAME", "cloud_resource_optimization"),
             "USER": os.getenv("DB_USER", "postgres"),
             "PASSWORD": os.getenv("DB_PASSWORD", "postgres"),
             "HOST": os.getenv("DB_HOST", "localhost"),
             "PORT": os.getenv("DB_PORT", "5432"),
         }
     }
-
-
+    
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -145,11 +144,9 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-# Django REST Framework Configuration
+# Django REST Framework Configuration (Open access for cloud resource telemetry & AI engine)
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
-    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
     ],
@@ -160,10 +157,10 @@ REST_FRAMEWORK = {
 }
 
 
-# CORS & CSRF Configuration for React Frontend
+# CORS & CSRF Configuration for React Frontend (Vercel & Local)
 from corsheaders.defaults import default_headers, default_methods
 
-CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
@@ -180,10 +177,12 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "https://cloud-opt-ai-rk8c.vercel.app",
+    "https://cloud-opt-ai.onrender.com",
 ]
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^http://localhost:\d+$",
     r"^http://127\.0\.0\.1:\d+$",
+    r"^https://.*\.vercel\.app$",
 ]
 CORS_ALLOW_CREDENTIALS = True
 
@@ -221,6 +220,7 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "https://cloud-opt-ai-rk8c.vercel.app",
+    "https://cloud-opt-ai.onrender.com",
 ]
 
 CSRF_COOKIE_HTTPONLY = False
@@ -233,7 +233,7 @@ SESSION_COOKIE_SECURE = False
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_DOMAIN = None
 
-# Email Configuration for Password Reset
+# Email Configuration
 EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'localhost')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
@@ -242,6 +242,7 @@ EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@cloudopt.ai')
 
-# Frontend Application URL for Password Reset Links & Redirects
+# Frontend Application URL
 FRONTEND_URL = os.getenv("FRONTEND_URL", "https://cloud-opt-ai-rk8c.vercel.app").strip()
+
 

@@ -7,15 +7,13 @@ import {
   TrendingUp, 
   Bot, 
   FileText, 
-  ShieldAlert,
   FileCheck2,
   Users,
-  Activity,
-  Shield
+  Activity
 } from 'lucide-react';
 
 export default function Sidebar({ activeTab, onTabChange, alertsCount, pendingRecsCount }) {
-  const { user, role, permissions } = useAuth();
+  const { user, role } = useAuth();
 
   // All navigation items are accessible to every authenticated user
   const allMenuItems = [
@@ -182,15 +180,15 @@ export default function Sidebar({ activeTab, onTabChange, alertsCount, pendingRe
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
               <Activity size={14} color="var(--success)" />
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-main)' }}>
-                RBAC & ML Engine
+                CloudOpt AI Engine
               </span>
             </div>
             <span className="badge badge-normal" style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem' }}>
-              Enforced
+              Online
             </span>
           </div>
           <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-            Django Auth &bull; Random Forest &bull; PostgreSQL
+            Multi-Cloud &bull; Random Forest &bull; PostgreSQL
           </div>
         </div>
       </div>

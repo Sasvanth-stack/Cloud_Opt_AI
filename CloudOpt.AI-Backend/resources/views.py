@@ -1,3 +1,5 @@
+
+
 import datetime
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.response import Response
@@ -667,7 +669,8 @@ def auth_user_detail(request, pk):
         )
 
     elif request.method == 'DELETE':
-        if target_user.id == request.user.id:
+        current_user_id = getattr(request.user, 'id', None)
+        if current_user_id and target_user.id == current_user_id:
             return Response(
                 {"status": "error", "message": "Cannot delete your own active administrator account."},
                 status=status.HTTP_400_BAD_REQUEST

@@ -1,15 +1,10 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
   Cloud, 
   Sparkles, 
   RefreshCw, 
-  RotateCcw,
-  LogOut,
-  User,
-  ShieldCheck,
-  Shield
+  RotateCcw
 } from 'lucide-react';
 
 export default function Navbar({ 
@@ -19,30 +14,10 @@ export default function Navbar({
   onRefresh, 
   isOptimizing 
 }) {
-  const navigate = useNavigate();
-  const { user, role, logout, permissions } = useAuth();
+  const { user, permissions } = useAuth();
 
   const score = stats?.optimization_score ?? 72.5;
   const scoreColor = score >= 80 ? 'var(--success)' : score >= 60 ? 'var(--warning)' : 'var(--danger)';
-
-  const getRoleColor = (r) => {
-    const roleUpper = (r || '').toUpperCase();
-    if (roleUpper === 'ADMIN') return '#38BDF8';
-    if (roleUpper === 'DEVOPS_ENGINEER') return '#10B981';
-    if (roleUpper === 'FINOPS_ANALYST') return '#F59E0B';
-    if (roleUpper === 'SRE_OPERATIONS') return '#8B5CF6';
-    return '#94A3B8';
-  };
-
-  const handleLogoutClick = async () => {
-    try {
-      await logout();
-      navigate('/login');
-    } catch (err) {
-      console.error('Logout error:', err);
-      navigate('/login');
-    }
-  };
 
   return (
     <header style={{
@@ -190,7 +165,7 @@ export default function Navbar({
           </div>
         </div>
 
-        {/* User Info & Logout */}
+        {/* User Info */}
         {user && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <div style={{
@@ -214,29 +189,12 @@ export default function Navbar({
                 fontSize: '0.75rem',
                 fontWeight: 700
               }}>
-                {(user.username || 'U')[0].toUpperCase()}
+                {(user.username || 'A')[0].toUpperCase()}
               </div>
               <span style={{ fontSize: '0.84rem', fontWeight: 600, color: '#fff' }}>
                 {user.full_name || user.username}
               </span>
             </div>
-
-            <button
-              onClick={handleLogoutClick}
-              className="btn btn-secondary btn-sm"
-              title="Sign Out of CloudOpt.AI"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                color: '#FCA5A5',
-                borderColor: 'rgba(239, 68, 68, 0.3)',
-                padding: '0.45rem 0.75rem'
-              }}
-            >
-              <LogOut size={14} />
-              <span style={{ fontSize: '0.8rem' }}>Sign Out</span>
-            </button>
           </div>
         )}
       </div>
