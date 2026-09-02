@@ -3,6 +3,7 @@ import sys
 import time
 from django.db import transaction
 from django.core import serializers
+from django.contrib.auth.models import User
 from .models import (
     Resource,
     Alert,
@@ -17,6 +18,7 @@ def ensure_real_records_loaded():
     Checks if PostgreSQL has real records.
     If the database is empty (e.g. fresh Render deployment), loads the 5,403
     canonical records from real_production_fixtures.json atomically.
+    Safely handles foreign keys to avoid IntegrityErrors.
     """
     try:
         if Resource.objects.exists() and Alert.objects.exists():
@@ -44,11 +46,18 @@ def ensure_real_records_loaded():
         with open(fixture_path, 'r', encoding='utf-8') as f:
             data = f.read()
 
+        valid_user_ids = set(User.objects.values_list('id', flat=True)) if User.objects.exists() else set()
         deserialized = list(serializers.deserialize('json', data))
 
         with transaction.atomic():
-            for obj in deserialized:
-                obj.save()
+            for deserialized_obj in deserialized:
+                instance = deserialized_obj.object
+                if hasattr(instance, 'user_id'):
+                    if instance.user_id and instance.user_id not in valid_user_ids:
+                        instance.user_id = None
+                        if hasattr(instance, 'user'):
+                            instance.user = None
+                deserialized_obj.save()
 
         elapsed = time.time() - t0
         return True, f"Successfully loaded {len(deserialized)} real PostgreSQL records in {elapsed:.2f}s."
