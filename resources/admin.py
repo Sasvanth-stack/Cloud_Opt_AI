@@ -4,8 +4,7 @@ from .models import (
     Alert,
     OptimizationRecommendation,
     ResourceTelemetry,
-    MLPredictionHistory,
-    AuditLog
+    MLPredictionHistory
 )
 
 
@@ -64,40 +63,6 @@ class OptimizationRecommendationAdmin(admin.ModelAdmin):
     search_fields = ['resource_id', 'resource_name', 'recommendation', 'reason']
     ordering = ['-updated_at']
     readonly_fields = ['created_at', 'updated_at']
-
-
-@admin.register(AuditLog)
-class AuditLogAdmin(admin.ModelAdmin):
-    list_display = [
-        'id',
-        'timestamp',
-        'username',
-        'user_role',
-        'action',
-        'module',
-        'resource_id',
-        'ip_address',
-    ]
-    list_filter = ['action', 'user_role', 'module']
-    search_fields = ['username', 'resource_id', 'description', 'action']
-    ordering = ['-timestamp']
-    readonly_fields = [
-        'timestamp',
-        'user',
-        'username',
-        'user_role',
-        'action',
-        'resource_id',
-        'module',
-        'description',
-        'ip_address',
-    ]
-
-    def has_add_permission(self, request):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
 
 
 @admin.register(ResourceTelemetry)

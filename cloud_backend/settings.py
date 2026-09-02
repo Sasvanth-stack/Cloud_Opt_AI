@@ -6,6 +6,7 @@ Configured with Django REST Framework, CORS Headers, and PostgreSQL readiness.
 """
 
 import os
+import dj_database_url
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -23,9 +24,17 @@ SECRET_KEY = os.getenv(
 
 DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,testserver').split(',')
-if 'testserver' not in ALLOWED_HOSTS:
-    ALLOWED_HOSTS.append('testserver')
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.getenv(
+        'ALLOWED_HOSTS',
+        'localhost,127.0.0.1,testserver,cloud-opt-ai.onrender.com,.onrender.com'
+    ).split(',')
+    if host.strip()
+]
+for default_host in ['localhost', '127.0.0.1', 'testserver', 'cloud-opt-ai.onrender.com', '.onrender.com']:
+    if default_host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(default_host)
 
 
 # Application definition
@@ -80,29 +89,31 @@ ASGI_APPLICATION = 'cloud_backend.asgi.application'
 
 
 # Database Configuration
-# Configured for PostgreSQL with default SQLite fallback for immediate startup
-USE_POSTGRES = os.getenv('USE_POSTGRES', 'False').lower() in ('true', '1', 'yes')
+# Render PostgreSQL using DATABASE_URL
+# Local PostgreSQL fallback for development
 
-if USE_POSTGRES:
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if DATABASE_URL:
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.getenv('DB_NAME', 'cloud_optimizer_db'),
-            'USER': os.getenv('DB_USER', 'postgres'),
-            'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
-            'HOST': os.getenv('DB_HOST', 'localhost'),
-            'PORT': os.getenv('DB_PORT', '5432'),
-        }
+        "default": dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=True,
+        )
     }
 else:
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.getenv("DB_NAME", "cloud_resource_optimization"),
+            "USER": os.getenv("DB_USER", "postgres"),
+            "PASSWORD": os.getenv("DB_PASSWORD", "postgres"),
+            "HOST": os.getenv("DB_HOST", "localhost"),
+            "PORT": os.getenv("DB_PORT", "5432"),
         }
     }
-
-
+    
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -133,11 +144,9 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-# Django REST Framework Configuration
+# Django REST Framework Configuration (Open access for cloud resource telemetry & AI engine)
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
-    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
     ],
@@ -148,10 +157,10 @@ REST_FRAMEWORK = {
 }
 
 
-# CORS & CSRF Configuration for React Frontend
+# CORS & CSRF Configuration for React Frontend (Vercel & Local)
 from corsheaders.defaults import default_headers, default_methods
 
-CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
@@ -167,10 +176,13 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5178",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "https://cloud-opt-ai-rk8c.vercel.app",
+    "https://cloud-opt-ai.onrender.com",
 ]
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^http://localhost:\d+$",
     r"^http://127\.0\.0\.1:\d+$",
+    r"^https://.*\.vercel\.app$",
 ]
 CORS_ALLOW_CREDENTIALS = True
 
@@ -207,6 +219,8 @@ CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:5178",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "https://cloud-opt-ai-rk8c.vercel.app",
+    "https://cloud-opt-ai.onrender.com",
 ]
 
 CSRF_COOKIE_HTTPONLY = False
@@ -219,7 +233,7 @@ SESSION_COOKIE_SECURE = False
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_DOMAIN = None
 
-# Email Configuration for Password Reset
+# Email Configuration
 EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'localhost')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
@@ -228,6 +242,7 @@ EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@cloudopt.ai')
 
-# Frontend Application URL for Password Reset Links & Redirects
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://127.0.0.1:5177").strip()
+# Frontend Application URL
+FRONTEND_URL = os.getenv("FRONTEND_URL", "https://cloud-opt-ai-rk8c.vercel.app").strip()
+
 

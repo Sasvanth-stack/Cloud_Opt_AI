@@ -1,6 +1,5 @@
 from rest_framework import serializers
-from django.contrib.auth.models import User
-from .models import Resource, Alert, OptimizationRecommendation, AuditLog
+from .models import Resource, Alert, OptimizationRecommendation
 
 
 class ResourceSerializer(serializers.ModelSerializer):
@@ -117,61 +116,3 @@ class OptimizationRecommendationSerializer(serializers.ModelSerializer):
             'risk': obj.risk,
             'what_if': obj.what_if,
         }
-
-
-class UserSerializer(serializers.ModelSerializer):
-    """
-    Serializer for the Django User model including role representation.
-    """
-    role = serializers.SerializerMethodField()
-
-    class Meta:
-        model = User
-        fields = [
-            'id',
-            'username',
-            'email',
-            'first_name',
-            'last_name',
-            'is_active',
-            'date_joined',
-            'role',
-        ]
-        read_only_fields = ['id', 'date_joined']
-
-    def get_role(self, obj):
-        if obj.is_superuser:
-            return 'ADMIN'
-        group = obj.groups.first()
-        if group:
-            return group.name
-        return 'VIEWER_MANAGER'
-
-
-class AuditLogSerializer(serializers.ModelSerializer):
-    """
-    Serializer for AuditLog trail records.
-    """
-    formatted_timestamp = serializers.SerializerMethodField()
-
-    class Meta:
-        model = AuditLog
-        fields = [
-            'id',
-            'user',
-            'username',
-            'user_role',
-            'action',
-            'resource_id',
-            'module',
-            'description',
-            'ip_address',
-            'timestamp',
-            'formatted_timestamp',
-        ]
-        read_only_fields = ['id', 'timestamp', 'formatted_timestamp']
-
-    def get_formatted_timestamp(self, obj):
-        if not obj.timestamp:
-            return ''
-        return obj.timestamp.strftime('%d-%b-%Y %I:%M %p')

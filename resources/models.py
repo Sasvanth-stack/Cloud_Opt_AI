@@ -1,5 +1,4 @@
 from django.db import models
-from django.contrib.auth.models import User
 
 
 class Resource(models.Model):
@@ -198,35 +197,3 @@ class MLPredictionHistory(models.Model):
 
     def __str__(self):
         return f"{self.resource_identifier} -> {self.prediction} ({self.confidence:.2f}) @ {self.created_at}"
-
-
-class AuditLog(models.Model):
-    """
-    Append-only security and operational audit trail for CloudOpt.AI.
-    Tracks user actions, role at execution, target module/resource, and timestamp.
-    """
-    user = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='audit_logs'
-    )
-    username = models.CharField(max_length=150, blank=True, default='')
-    user_role = models.CharField(max_length=50, blank=True, default='')
-    action = models.CharField(max_length=100, db_index=True)
-    resource_id = models.CharField(max_length=100, blank=True, default='', db_index=True)
-    module = models.CharField(max_length=100, default='General')
-    description = models.TextField(blank=True, default='')
-    ip_address = models.CharField(max_length=50, blank=True, default='')
-    timestamp = models.DateTimeField(auto_now_add=True, db_index=True)
-
-    class Meta:
-        ordering = ['-timestamp']
-        verbose_name = 'Audit Log'
-        verbose_name_plural = 'Audit Logs'
-
-    def __str__(self):
-        return f"[{self.timestamp.strftime('%Y-%m-%d %H:%M:%S')}] {self.username} ({self.user_role}): {self.action} on {self.resource_id or self.module}"
-
-
