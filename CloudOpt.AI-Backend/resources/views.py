@@ -45,6 +45,7 @@ from .permissions import (
     require_authenticated,
     require_roles
 )
+from .loader import ensure_real_records_loaded
 
 
 ORIGINAL_DEMO_ALERTS = [
@@ -754,6 +755,8 @@ def resource_list(request):
     POST /api/resources/  - Create a new resource (All authenticated users)
     """
     if request.method == 'GET':
+        if not Resource.objects.exists():
+            ensure_real_records_loaded()
         resources = Resource.objects.all().order_by('id')
         serializer = ResourceSerializer(resources, many=True)
         return Response(
@@ -1050,6 +1053,8 @@ def optimization_list(request):
     GET /api/optimization/  - List all optimization recommendations stored in PostgreSQL
     Supports ?status=pending|approved|dismissed
     """
+    if not OptimizationRecommendation.objects.exists():
+        ensure_real_records_loaded()
     status_filter = request.GET.get('status')
     queryset = OptimizationRecommendation.objects.all().order_by('-updated_at')
     if status_filter:
@@ -1169,6 +1174,8 @@ def alert_list(request):
     POST /api/alerts/  - Create a new alert
     """
     if request.method == 'GET':
+        if not Alert.objects.exists():
+            ensure_real_records_loaded()
         status_filter = request.GET.get('status')
         alerts = Alert.objects.all()
         if status_filter:
@@ -1409,6 +1416,9 @@ def report_summary(request):
     Generates a timestamp-filtered FinOps executive report.
     """
     from django.db.models import Avg, Max, Q
+
+    if not Resource.objects.exists():
+        ensure_real_records_loaded()
 
     ensure_baseline_telemetry()
 
