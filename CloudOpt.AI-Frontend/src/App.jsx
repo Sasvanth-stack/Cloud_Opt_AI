@@ -8,6 +8,8 @@ import Alerts from './pages/Alerts';
 import AIPredictions from './pages/AIPredictions';
 import AIAgentOptimization from './pages/AIAgentOptimization';
 import Reports from './pages/Reports';
+import AuditLogs from './pages/AuditLogs';
+import UserManagement from './pages/UserManagement';
 import { AuthProvider } from './context/AuthContext';
 import { api } from './services/api';
 import { CheckCircle2, AlertCircle, RefreshCw, ServerCrash } from 'lucide-react';
@@ -55,12 +57,12 @@ function DashboardLayout({ activeTab, onTabChange }) {
       if (repRes.status === 'fulfilled' && repRes.value) setReports(repRes.value);
 
       if (!isHealthy) {
-        showToast('Unable to connect to CloudOpt backend API. Retrying telemetry stream...', 'error');
+        showToast('Unable to reach Django server at http://127.0.0.1:8000', 'error');
       }
     } catch (err) {
-      console.error('Error loading initial data from backend:', err);
+      console.error('Error loading initial data from Django backend:', err);
       setBackendConnected(false);
-      showToast('Unable to connect to CloudOpt backend API.', 'error');
+      showToast('Unable to connect to Django backend.', 'error');
     } finally {
       setIsDataLoading(false);
     }
@@ -299,6 +301,14 @@ function DashboardLayout({ activeTab, onTabChange }) {
                 resources={resources}
               />
             )}
+
+            {activeTab === 'audit-logs' && (
+              <AuditLogs />
+            )}
+
+            {activeTab === 'users' && (
+              <UserManagement showToast={showToast} />
+            )}
           </main>
         )}
 
@@ -340,7 +350,7 @@ function AppContent() {
 
   const getActiveTab = () => {
     const p = location.pathname.replace(/^\//, '').toLowerCase();
-    if (['resources', 'alerts', 'predictions', 'agent', 'reports'].includes(p)) {
+    if (['resources', 'alerts', 'predictions', 'agent', 'reports', 'audit-logs', 'users'].includes(p)) {
       return p;
     }
     return 'dashboard';
@@ -361,6 +371,8 @@ function AppContent() {
       <Route path="/predictions" element={<DashboardLayout activeTab="predictions" onTabChange={setActiveTab} />} />
       <Route path="/agent" element={<DashboardLayout activeTab="agent" onTabChange={setActiveTab} />} />
       <Route path="/reports" element={<DashboardLayout activeTab="reports" onTabChange={setActiveTab} />} />
+      <Route path="/audit-logs" element={<DashboardLayout activeTab="audit-logs" onTabChange={setActiveTab} />} />
+      <Route path="/users" element={<DashboardLayout activeTab="users" onTabChange={setActiveTab} />} />
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );

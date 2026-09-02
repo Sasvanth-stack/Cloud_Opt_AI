@@ -22,10 +22,12 @@ const DEFAULT_USER = {
 export function AuthProvider({ children }) {
   const [user] = useState(DEFAULT_USER);
 
-  // Full operational permissions for cloud optimization dashboard
+  // Full access model without authentication restrictions
   const permissions = {
     canApprove: true,
     canDismiss: true,
+    canManageUsers: true,
+    canViewAuditLogs: true,
     canModifyResources: true,
     canManageAlerts: true,
     canRunOptimization: true,

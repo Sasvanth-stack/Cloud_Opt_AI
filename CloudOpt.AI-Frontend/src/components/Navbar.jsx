@@ -1,10 +1,15 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
   Cloud, 
   Sparkles, 
   RefreshCw, 
-  RotateCcw
+  RotateCcw,
+  LogOut,
+  User,
+  ShieldCheck,
+  Shield
 } from 'lucide-react';
 
 export default function Navbar({ 
@@ -14,10 +19,30 @@ export default function Navbar({
   onRefresh, 
   isOptimizing 
 }) {
-  const { user, permissions } = useAuth();
+  const navigate = useNavigate();
+  const { user, role, logout, permissions } = useAuth();
 
   const score = stats?.optimization_score ?? 72.5;
   const scoreColor = score >= 80 ? 'var(--success)' : score >= 60 ? 'var(--warning)' : 'var(--danger)';
+
+  const getRoleColor = (r) => {
+    const roleUpper = (r || '').toUpperCase();
+    if (roleUpper === 'ADMIN') return '#38BDF8';
+    if (roleUpper === 'DEVOPS_ENGINEER') return '#10B981';
+    if (roleUpper === 'FINOPS_ANALYST') return '#F59E0B';
+    if (roleUpper === 'SRE_OPERATIONS') return '#8B5CF6';
+    return '#94A3B8';
+  };
+
+  const handleLogoutClick = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (err) {
+      console.error('Logout error:', err);
+      navigate('/login');
+    }
+  };
 
   return (
     <header style={{

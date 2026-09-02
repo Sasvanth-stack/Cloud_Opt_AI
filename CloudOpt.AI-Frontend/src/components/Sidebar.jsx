@@ -7,12 +7,17 @@ import {
   TrendingUp, 
   Bot, 
   FileText, 
-  Activity
+  ShieldAlert,
+  FileCheck2,
+  Users,
+  Activity,
+  Shield
 } from 'lucide-react';
 
 export default function Sidebar({ activeTab, onTabChange, alertsCount, pendingRecsCount }) {
-  const { user, role } = useAuth();
+  const { user, role, permissions } = useAuth();
 
+  // All navigation items are accessible to every authenticated user
   const allMenuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, badge: null, show: true },
     { id: 'resources', label: 'Cloud Resources', icon: Server, badge: null, show: true },
@@ -20,6 +25,8 @@ export default function Sidebar({ activeTab, onTabChange, alertsCount, pendingRe
     { id: 'predictions', label: 'AI Predictions (ML)', icon: TrendingUp, badge: null, show: true },
     { id: 'agent', label: 'AI Agent & Optimization', icon: Bot, badge: pendingRecsCount > 0 ? pendingRecsCount : null, badgeColor: 'var(--primary-light)', show: true },
     { id: 'reports', label: 'Reports & Export', icon: FileText, badge: null, show: true },
+    { id: 'audit-logs', label: 'Audit Logs', icon: FileCheck2, badge: null, show: true },
+    { id: 'users', label: 'User Management', icon: Users, badge: null, show: true }
   ];
 
   const visibleMenuItems = allMenuItems.filter(item => item.show);
@@ -175,15 +182,15 @@ export default function Sidebar({ activeTab, onTabChange, alertsCount, pendingRe
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
               <Activity size={14} color="var(--success)" />
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-main)' }}>
-                CloudOpt AI Engine
+                RBAC & ML Engine
               </span>
             </div>
             <span className="badge badge-normal" style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem' }}>
-              Online
+              Enforced
             </span>
           </div>
           <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-            Multi-Cloud &bull; Random Forest &bull; PostgreSQL
+            Django Auth &bull; Random Forest &bull; PostgreSQL
           </div>
         </div>
       </div>

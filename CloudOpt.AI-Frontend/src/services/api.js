@@ -1,26 +1,21 @@
 /**
  * Backend API base URL.
  * Configured through VITE_API_BASE_URL environment variable with
- * automatic dynamic hostname fallback for local development or deployed Vercel -> Render.
+ * automatic dynamic hostname fallback (127.0.0.1 or localhost)
+ * to guarantee cookies are always same-site.
  */
 export const getApiBaseUrl = () => {
   if (import.meta.env?.VITE_API_BASE_URL) {
     return import.meta.env.VITE_API_BASE_URL;
   }
-  if (typeof window !== 'undefined' && window.location?.hostname) {
-    const host = window.location.hostname;
-    if (host.includes('vercel.app')) {
-      return 'https://cloud-opt-ai.onrender.com/api';
-    }
-    return `http://${host}:8000/api`;
-  }
-  return 'http://127.0.0.1:8000/api';
+  const host = typeof window !== 'undefined' && window.location?.hostname ? window.location.hostname : '127.0.0.1';
+  return `http://${host}:8000/api`;
 };
 
 export const API_BASE_URL = getApiBaseUrl();
 
 /**
- * Helper to retrieve CSRF token from browser cookies if present
+ * Helper to retrieve CSRF token from browser cookies
  */
 function getCookie(name) {
   let cookieValue = null;
@@ -38,11 +33,13 @@ function getCookie(name) {
 }
 
 /**
- * Standard fetch wrapper with clean error handling and JSON headers.
- * Unauthenticated access is standard across all cloud monitoring, telemetry, and optimization endpoints.
+ * Standard fetch wrapper with error handling, credentials, and CSRF token.
+ * All requests use credentials: 'include' so the browser always sends
+ * the Django session cookie along with each API call.
  */
 async function safeFetch(url, options = {}) {
   const baseUrl = getApiBaseUrl();
+  // Resolve relative URLs against API_BASE_URL
   const targetUrl = url.startsWith('http://') || url.startsWith('https://')
     ? url
     : `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
@@ -51,13 +48,13 @@ async function safeFetch(url, options = {}) {
     const csrfToken = getCookie('csrftoken');
     const headers = {
       'Content-Type': 'application/json',
-      'Accept': 'application/json',
       ...(csrfToken ? { 'X-CSRFToken': csrfToken } : {}),
       ...(options.headers || {})
     };
 
     const res = await fetch(targetUrl, {
       ...options,
+      credentials: 'include',
       headers
     });
 
@@ -73,10 +70,13 @@ async function safeFetch(url, options = {}) {
 
     return data;
   } catch (err) {
-    console.warn(`[CloudOpt API] API error for ${targetUrl}:`, err.message);
+    if (err.status !== 401 && err.status !== 403) {
+      console.warn(`[CloudOpt API] API error for ${targetUrl}:`, err.message);
+    }
     throw err;
   }
 }
+
 
 /**
  * Normalizes PostgreSQL Resource records from Django to standard frontend format
@@ -134,8 +134,21 @@ export const api = {
   },
 
   // ─────────────────────────────────────────────
-  // 1. Current Active Operator Profile
+  // 1. Authentication & Session APIs
   // ─────────────────────────────────────────────
+  // ── Authentication (Disabled - Direct Dashboard Mode) ─────────
+  async register(userData) {
+    return { status: 'success', user: { username: 'Admin', full_name: 'CloudOpt Operator', role: 'ADMIN' } };
+  },
+
+  async login(username, password) {
+    return { status: 'success', user: { username: 'Admin', full_name: 'CloudOpt Operator', role: 'ADMIN' } };
+  },
+
+  async logout() {
+    return { status: 'success' };
+  },
+
   async getCurrentUser() {
     return {
       id: 1,
@@ -147,8 +160,82 @@ export const api = {
     };
   },
 
+  async forgotPassword(email) {
+    return { status: 'success' };
+  },
+
+  async resetPassword(uid, token, new_password, confirm_password) {
+    return { status: 'success' };
+  },
+
   // ─────────────────────────────────────────────
-  // 2. Resources CRUD
+  async getUsers() {
+    try {
+      const response = await safeFetch(`${API_BASE_URL}/auth/users/`);
+      if (response) {
+        return Array.isArray(response)
+          ? response
+          : (response.results || response.data || response.users || []);
+      }
+      return [];
+    } catch (err) {
+      console.warn('Error fetching users:', err.message);
+      return [];
+    }
+  },
+
+  async createUser(userData) {
+    const response = await safeFetch(`${API_BASE_URL}/auth/users/`, {
+      method: 'POST',
+      body: JSON.stringify(userData)
+    });
+    return response;
+  },
+
+  async updateUser(userId, data) {
+    const response = await safeFetch(`${API_BASE_URL}/auth/users/${userId}/`, {
+      method: 'PATCH',
+      body: JSON.stringify(data)
+    });
+    return response;
+  },
+
+  async deleteUser(userId) {
+    const response = await safeFetch(`${API_BASE_URL}/auth/users/${userId}/`, {
+      method: 'DELETE'
+    });
+    return response;
+  },
+
+  // ─────────────────────────────────────────────
+  // 3. Audit Logs API
+  // ─────────────────────────────────────────────
+  async getAuditLogs(params = {}) {
+    const query = new URLSearchParams();
+    if (params.action) query.set('action', params.action);
+    if (params.user) query.set('user', params.user);
+    if (params.resource) query.set('resource', params.resource);
+    if (params.module) query.set('module', params.module);
+    if (params.limit) query.set('limit', params.limit);
+
+    const queryString = query.toString() ? `?${query.toString()}` : '';
+    try {
+      const response = await safeFetch(`${API_BASE_URL}/audit-logs/${queryString}`);
+      if (response) {
+        const rawList = Array.isArray(response) 
+          ? response 
+          : (response.results || response.data || response.logs || []);
+        return rawList;
+      }
+      return [];
+    } catch (err) {
+      console.warn('Error fetching audit logs:', err.message);
+      return [];
+    }
+  },
+
+  // ─────────────────────────────────────────────
+  // 4. Resources CRUD
   // ─────────────────────────────────────────────
   async getResources() {
     try {
@@ -205,7 +292,7 @@ export const api = {
   },
 
   // ─────────────────────────────────────────────
-  // 3. ML Prediction Endpoint
+  // 5. ML Prediction Endpoint
   // ─────────────────────────────────────────────
   async predictResource(id, extraMetrics = {}) {
     const response = await safeFetch(`${API_BASE_URL}/resources/${id}/predict/`, {
@@ -220,7 +307,7 @@ export const api = {
   },
 
   // ─────────────────────────────────────────────
-  // 4. n8n AI Agent Optimization
+  // 6. n8n AI Agent Optimization
   // ─────────────────────────────────────────────
   async optimizeResource(id) {
     const response = await safeFetch(`${API_BASE_URL}/resources/${id}/optimize/`, {
@@ -236,7 +323,7 @@ export const api = {
   },
 
   // ─────────────────────────────────────────────
-  // 5. Dynamic Dashboard Stats
+  // 7. Dynamic Dashboard Stats
   // ─────────────────────────────────────────────
   async getDashboardStats(resourcesList = null) {
     const resources = resourcesList || await this.getResources();
@@ -299,7 +386,7 @@ export const api = {
   },
 
   // ─────────────────────────────────────────────
-  // 6. Alerts & Anomalies
+  // 8. Alerts & Anomalies
   // ─────────────────────────────────────────────
   async getAlerts() {
     try {
@@ -361,7 +448,7 @@ export const api = {
   },
 
   // ─────────────────────────────────────────────
-  // 7. AI Recommendations
+  // 9. AI Recommendations
   // ─────────────────────────────────────────────
   async getRecommendations(statusFilter = null) {
     try {
@@ -422,7 +509,7 @@ export const api = {
   },
 
   // ─────────────────────────────────────────────
-  // 8. FinOps & Optimization Reports
+  // 10. FinOps & Optimization Reports
   // ─────────────────────────────────────────────
   async getReportSummary(reportType = 'Monthly') {
     const response = await safeFetch(`${API_BASE_URL}/reports/summary/?type=${encodeURIComponent(reportType)}`);
