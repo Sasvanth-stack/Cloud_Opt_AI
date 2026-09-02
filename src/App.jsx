@@ -8,19 +8,12 @@ import Alerts from './pages/Alerts';
 import AIPredictions from './pages/AIPredictions';
 import AIAgentOptimization from './pages/AIAgentOptimization';
 import Reports from './pages/Reports';
-import AuditLogs from './pages/AuditLogs';
-import UserManagement from './pages/UserManagement';
-import Login from './pages/Login';
-import SignUp from './pages/SignUp';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext';
 import { api } from './services/api';
 import { CheckCircle2, AlertCircle, RefreshCw, ServerCrash } from 'lucide-react';
 
 function DashboardLayout({ activeTab, onTabChange }) {
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
 
   const [stats, setStats] = useState(null);
   const [resources, setResources] = useState([]);
@@ -40,7 +33,6 @@ function DashboardLayout({ activeTab, onTabChange }) {
   };
 
   const loadAllData = async () => {
-    if (!isAuthenticated) return;
     setIsDataLoading(true);
     try {
       const isHealthy = await api.checkHealth();
@@ -63,22 +55,20 @@ function DashboardLayout({ activeTab, onTabChange }) {
       if (repRes.status === 'fulfilled' && repRes.value) setReports(repRes.value);
 
       if (!isHealthy) {
-        showToast('Unable to reach Django server at http://127.0.0.1:8000', 'error');
+        showToast('Unable to connect to CloudOpt backend API. Retrying telemetry stream...', 'error');
       }
     } catch (err) {
-      console.error('Error loading initial data from Django backend:', err);
+      console.error('Error loading initial data from backend:', err);
       setBackendConnected(false);
-      showToast('Unable to connect to Django backend.', 'error');
+      showToast('Unable to connect to CloudOpt backend API.', 'error');
     } finally {
       setIsDataLoading(false);
     }
   };
 
   useEffect(() => {
-    if (isAuthenticated) {
-      loadAllData();
-    }
-  }, [isAuthenticated]);
+    loadAllData();
+  }, []);
 
   const handleRunOptimization = async () => {
     setIsOptimizing(true);
@@ -309,14 +299,6 @@ function DashboardLayout({ activeTab, onTabChange }) {
                 resources={resources}
               />
             )}
-
-            {activeTab === 'audit-logs' && (
-              <AuditLogs />
-            )}
-
-            {activeTab === 'users' && (
-              <UserManagement showToast={showToast} />
-            )}
           </main>
         )}
 
@@ -354,12 +336,11 @@ function DashboardLayout({ activeTab, onTabChange }) {
 }
 
 function AppContent() {
-  const { isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
 
   const getActiveTab = () => {
     const p = location.pathname.replace(/^\//, '').toLowerCase();
-    if (['resources', 'alerts', 'predictions', 'agent', 'reports', 'audit-logs', 'users'].includes(p)) {
+    if (['resources', 'alerts', 'predictions', 'agent', 'reports'].includes(p)) {
       return p;
     }
     return 'dashboard';
@@ -371,91 +352,16 @@ function AppContent() {
     setActiveTab(getActiveTab());
   }, [location.pathname]);
 
-  if (isLoading) {
-    return (
-      <div style={{
-        minHeight: '100vh',
-        backgroundColor: 'var(--bg-main)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '1rem',
-        color: 'var(--text-secondary)'
-      }}>
-        <RefreshCw size={36} className="spin-animation" color="var(--primary-light)" />
-        <div style={{ fontSize: '0.95rem', fontWeight: 600 }}>Checking session status...</div>
-      </div>
-    );
-  }
-
   return (
     <Routes>
-      {/* 1. Public Auth Routes (Redirect to /dashboard if already authenticated) */}
-      <Route 
-        path="/login" 
-        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />} 
-      />
-      <Route 
-        path="/signup" 
-        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <SignUp />} 
-      />
-      <Route 
-        path="/forgot-password" 
-        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <ForgotPassword />} 
-      />
-      <Route 
-        path="/reset-password/:uid/:token" 
-        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <ResetPassword />} 
-      />
-      <Route 
-        path="/reset-password" 
-        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <ResetPassword />} 
-      />
-
-      {/* 2. Protected Dashboard & Module Routes (Redirect to /login if unauthenticated) */}
-      <Route 
-        path="/dashboard" 
-        element={isAuthenticated ? <DashboardLayout activeTab="dashboard" onTabChange={setActiveTab} /> : <Navigate to="/login" replace />} 
-      />
-      <Route 
-        path="/resources" 
-        element={isAuthenticated ? <DashboardLayout activeTab="resources" onTabChange={setActiveTab} /> : <Navigate to="/login" replace />} 
-      />
-      <Route 
-        path="/alerts" 
-        element={isAuthenticated ? <DashboardLayout activeTab="alerts" onTabChange={setActiveTab} /> : <Navigate to="/login" replace />} 
-      />
-      <Route 
-        path="/predictions" 
-        element={isAuthenticated ? <DashboardLayout activeTab="predictions" onTabChange={setActiveTab} /> : <Navigate to="/login" replace />} 
-      />
-      <Route 
-        path="/agent" 
-        element={isAuthenticated ? <DashboardLayout activeTab="agent" onTabChange={setActiveTab} /> : <Navigate to="/login" replace />} 
-      />
-      <Route 
-        path="/reports" 
-        element={isAuthenticated ? <DashboardLayout activeTab="reports" onTabChange={setActiveTab} /> : <Navigate to="/login" replace />} 
-      />
-      <Route 
-        path="/audit-logs" 
-        element={isAuthenticated ? <DashboardLayout activeTab="audit-logs" onTabChange={setActiveTab} /> : <Navigate to="/login" replace />} 
-      />
-      <Route 
-        path="/users" 
-        element={isAuthenticated ? <DashboardLayout activeTab="users" onTabChange={setActiveTab} /> : <Navigate to="/login" replace />} 
-      />
-
-      {/* 3. Root and Catch-All Fallbacks */}
-      <Route 
-        path="/" 
-        element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />} 
-      />
-      <Route 
-        path="*" 
-        element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />} 
-      />
+      <Route path="/" element={<DashboardLayout activeTab="dashboard" onTabChange={setActiveTab} />} />
+      <Route path="/dashboard" element={<DashboardLayout activeTab="dashboard" onTabChange={setActiveTab} />} />
+      <Route path="/resources" element={<DashboardLayout activeTab="resources" onTabChange={setActiveTab} />} />
+      <Route path="/alerts" element={<DashboardLayout activeTab="alerts" onTabChange={setActiveTab} />} />
+      <Route path="/predictions" element={<DashboardLayout activeTab="predictions" onTabChange={setActiveTab} />} />
+      <Route path="/agent" element={<DashboardLayout activeTab="agent" onTabChange={setActiveTab} />} />
+      <Route path="/reports" element={<DashboardLayout activeTab="reports" onTabChange={setActiveTab} />} />
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );
 }
